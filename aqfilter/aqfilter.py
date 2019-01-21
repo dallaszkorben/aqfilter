@@ -1,32 +1,29 @@
 import sys
 import time 
 
+from PyQt5 import Qt
+
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtWidgets import QVBoxLayout
 from PyQt5.QtWidgets import QHBoxLayout
-from PyQt5.QtWidgets import QScrollArea
-from PyQt5.QtWidgets import QLabel
 from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtWidgets import QListWidget
 from PyQt5.QtWidgets import QListWidgetItem
-from PyQt5.QtWidgets import QComboBox
-from PyQt5.QtWidgets import QDockWidget
-
 from PyQt5.QtWidgets import QPushButton
-from PyQt5.QtWidgets import QDesktopWidget
 
-from PyQt5 import Qt
+from PyQt5.QtWidgets import QDesktopWidget
 
 from PyQt5.QtCore import QItemSelection
 from PyQt5.QtCore import QEvent
+from PyQt5.QtCore import QModelIndex
 
 from PyQt5.QtCore import QRect
 from PyQt5.QtCore import Qt
 from PyQt5.QtCore import QThread
 from PyQt5.QtCore import pyqtSignal
 
-from PyQt5.QtWidgets import QAbstractItemView
+#from PyQt5.QtWidgets import QAbstractItemView
 
 # ##################
 #
@@ -179,6 +176,13 @@ class AQFilter(QWidget):
         # Escape Key Pressed
         elif event.type() == QEvent.KeyPress and event.key() == Qt.Key_Escape:
             self.hide_list()
+            
+        # Down Arrow Key Pressed
+        elif event.type() == QEvent.KeyPress and event.key() == Qt.Key_Down and obj is self.input_widget:
+            self.show_list()
+            self.list_widget.setWindowState(Qt.WindowActive)
+            self.list_widget.activateWindow()
+            self.list_widget.setFocus()
 
 #        # Key Pressed on Input Widget
 #        elif event.type() == QEvent.KeyPress and obj is self.input_widget:            
@@ -213,7 +217,7 @@ class FieldWidget(QLineEdit):
 
 # ######################
 #
-# List
+# List Widget
 #
 # ######################
 class ListWidget(QListWidget):
@@ -247,14 +251,6 @@ class ListWidget(QListWidget):
 #            sm.select(QItemSelection(top, bottom), sm.Select)        
         event.ignore()
 
-    def mouseDoubleClickEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            i = self.currentItem()
-            if i is not None:
-                self.parent.setSelectedValueIndex(i.text(), i.data(Qt.UserRole))
-                self.setHidden(True)
-           
-
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
             self.setHidden(True)
@@ -262,7 +258,53 @@ class ListWidget(QListWidget):
         elif event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
             i = self.currentItem()
             if i is not None:
-                print(i.data(Qt.UserRole))
+                self.parent.setSelectedValueIndex(i.text(), i.data(Qt.UserRole))
+                self.setHidden(True)                
+
+        elif event.key() == Qt.Key_Down:
+            m = self.model()
+            ci = self.currentIndex()
+            max_row = m.rowCount(QModelIndex()) - 1            
+            ind = ci.row()
+            if ind == max_row:
+                ind = 0
+            else:
+                ind = ind + 1
+            ci = self.model().index(ind,0, QModelIndex())
+            sm = self.selectionModel()
+            sm.setCurrentIndex(ci, sm.NoUpdate | sm.ClearAndSelect)
+
+        elif event.key() == Qt.Key_Up:
+            m = self.model()
+            ci = self.currentIndex()
+            max_row = m.rowCount(QModelIndex()) - 1
+            ind = ci.row()
+            if ind == 0:
+                ind = max_row
+            else:
+                ind = ind - 1
+            
+            ci = m.index(ind, 0, QModelIndex())
+            sm = self.selectionModel()
+            sm.setCurrentIndex(ci, sm.NoUpdate | sm.ClearAndSelect)
+                        
+            
+            #index = self.indexAt(event.pos())
+            #if not index.isValid():
+            #    return
+            #
+            #ci = self.currentIndex()
+            #sm = self.selectionModel()
+            #sm.setCurrentIndex(index, sm.NoUpdate | sm.ClearAndSelect)
+            
+        event.ignore()
+
+    def mouseDoubleClickEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            i = self.currentItem()
+            if i is not None:
+                self.parent.setSelectedValueIndex(i.text(), i.data(Qt.UserRole))
+                self.setHidden(True)
 
         event.ignore()
 
@@ -353,6 +395,14 @@ class Test(QWidget):
         ako_filter.addItemToList("Fifth element",5)
         ako_filter.addItemToList("Sixth element",6)
         ako_filter.addItemToList("Seventh element",7)
+        ako_filter.addItemToList("Eight element",8)
+        ako_filter.addItemToList("Nineth element",9)
+        ako_filter.addItemToList("Tenth element",10)
+        ako_filter.addItemToList("Eleven element",11)
+        ako_filter.addItemToList("Twelv element",12)
+        ako_filter.addItemToList("Thirteen element",13)
+        ako_filter.addItemToList("Fourteen element",14)
+        ako_filter.addItemToList("Fifteen element",15)        
         
         next_button = QPushButton("next button")
         self_layout.addWidget(next_button)
@@ -360,7 +410,7 @@ class Test(QWidget):
       
         # --- Window ---
         self.setWindowTitle("Test AQFilter")    
-        self.resize(500,300)
+        self.resize(500,200)
         self.center()
         self.show()    
         
