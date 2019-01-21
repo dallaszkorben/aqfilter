@@ -11,17 +11,19 @@ from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtWidgets import QListWidget
 from PyQt5.QtWidgets import QListWidgetItem
 from PyQt5.QtWidgets import QPushButton
+from PyQt5.QtWidgets import QLabel
 
 from PyQt5.QtWidgets import QDesktopWidget
 
 from PyQt5.QtCore import QItemSelection
 from PyQt5.QtCore import QEvent
 from PyQt5.QtCore import QModelIndex
-
 from PyQt5.QtCore import QRect
 from PyQt5.QtCore import Qt
 from PyQt5.QtCore import QThread
 from PyQt5.QtCore import pyqtSignal
+
+from PyQt5.QtGui import QFont
 
 #from PyQt5.QtWidgets import QAbstractItemView
 
@@ -89,17 +91,40 @@ class AQFilter(QWidget):
         self.setTypedValueIndex(self.input_widget.text())
        
         self.reposition_list()
-        self.list_widget.setHidden(False)
         self.list_widget.clear()
+        hit_list = 0
         for i in self.list:
-            if self.input_widget.text().lower() in i[0].lower():            
-                item=QListWidgetItem()            
-                item.setText(i[0])
-                item.setData(Qt.UserRole, i[1])
-                self.list_widget.addItem(item)                        
 
-        self.setWindowState(Qt.WindowActive)
-        self.activateWindow()
+            if self.input_widget.text().lower() in i[0].lower():
+                start = i[0].lower().index(self.input_widget.text().lower())
+                end = len(self.input_widget.text()) + start
+                part_1 = i[0][0:start]
+                part_2 = i[0][start:end]
+                part_3 = i[0][end:]
+                
+                #item=QListWidgetItem()
+                #item.setText( )
+                #item.setData(Qt.UserRole, i[1])
+                #self.list_widget.addItem(item)
+                
+                label = DoubleLabel(part_1 + '<b>' + part_2 + '</b>' + part_3, i[0], self)
+                item=QListWidgetItem()
+                item.setData(Qt.UserRole, i[1])
+                self.list_widget.addItem(item)
+                self.list_widget.setItemWidget(item, label)
+                hit_list = hit_list + 1
+
+        if hit_list > 0:
+            self.list_widget.setHidden(False)
+
+            self.list_widget.setMinimumWidth(self.list_widget.sizeHintForColumn(0) + 15)
+            self.list_widget.setMaximumWidth(self.list_widget.sizeHintForColumn(0) + 15)
+
+            self.setWindowState(Qt.WindowActive)
+            self.activateWindow()
+        else:
+            self.list_widget.setHidden(True)
+
 
     def get_main_window(self):
         """Search for the Main Window"""
@@ -257,9 +282,10 @@ class ListWidget(QListWidget):
             
         elif event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
             i = self.currentItem()
+
             if i is not None:
-                self.parent.setSelectedValueIndex(i.text(), i.data(Qt.UserRole))
-                self.setHidden(True)                
+                self.parent.setSelectedValueIndex(self.itemWidget(i).getValueText(), i.data(Qt.UserRole))
+                self.setHidden(True)
 
         elif event.key() == Qt.Key_Down:
             m = self.model()
@@ -287,7 +313,6 @@ class ListWidget(QListWidget):
             ci = m.index(ind, 0, QModelIndex())
             sm = self.selectionModel()
             sm.setCurrentIndex(ci, sm.NoUpdate | sm.ClearAndSelect)
-                        
             
             #index = self.indexAt(event.pos())
             #if not index.isValid():
@@ -303,10 +328,18 @@ class ListWidget(QListWidget):
         if event.button() == Qt.LeftButton:
             i = self.currentItem()
             if i is not None:
-                self.parent.setSelectedValueIndex(i.text(), i.data(Qt.UserRole))
+                self.parent.setSelectedValueIndex(self.itemWidget(i).getValueText(), i.data(Qt.UserRole))
                 self.setHidden(True)
 
         event.ignore()
+
+class DoubleLabel(QLabel):
+    def __init__(self, labelText, valueText, parent):
+        super().__init__(labelText, parent)
+        self.valueText = valueText
+
+    def getValueText(self):
+        return self.valueText
 
 # =========================
 #
