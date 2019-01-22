@@ -33,6 +33,7 @@ from PyQt5.QtGui import QFont
 #
 # ===================
 class AQFilter(QWidget):
+    MAX_LINE = 10
     def __init__(self, parent):
         super().__init__(parent)
 
@@ -44,6 +45,7 @@ class AQFilter(QWidget):
         self.parent = parent
         self.main_window = self.get_main_window()
         
+        self.max_line = AQFilter.MAX_LINE
         self.value = ""
         self.index = None
         
@@ -62,6 +64,10 @@ class AQFilter(QWidget):
         
         self.input_widget.textChanged.connect(self.show_list)
       
+    def set_max_line(self, max_line):
+        """Set the max number of lines of the list"""
+        self.max_line = max_line
+        
     def setSelectedValueIndex(self, value, index):
         """Set the value-index by the selected element from the list"""
         self.setTypedValueIndex(value, index)
@@ -121,7 +127,7 @@ class AQFilter(QWidget):
 
             self.list_widget.setFixedSize(
                 self.list_widget.sizeHintForColumn(0) + 2 * self.list_widget.frameWidth() + sb_width, 
-                self.list_widget.sizeHintForRow(0) * min(self.list_widget.count(), 8) + 2 * self.list_widget.frameWidth()
+                self.list_widget.sizeHintForRow(0) * min(self.list_widget.count(), self.max_line) + 2 * self.list_widget.frameWidth()
             )
             
             self.setWindowState(Qt.WindowActive)
