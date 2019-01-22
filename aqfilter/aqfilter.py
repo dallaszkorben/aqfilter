@@ -33,7 +33,9 @@ from PyQt5.QtGui import QFont
 #
 # ===================
 class AQFilter(QWidget):
-    MAX_LINE = 10
+    DEFAULT_MAX_LINE = 10
+    DEFAULT_MIN_CHARS = 0
+    
     def __init__(self, parent):
         super().__init__(parent)
 
@@ -45,7 +47,10 @@ class AQFilter(QWidget):
         self.parent = parent
         self.main_window = self.get_main_window()
         
-        self.max_line = AQFilter.MAX_LINE
+        self.max_line = AQFilter.DEFAULT_MAX_LINE
+        self.min_chars_to_show_list = AQFilter.DEFAULT_MIN_CHARS
+        
+        
         self.value = ""
         self.index = None
         
@@ -63,25 +68,37 @@ class AQFilter(QWidget):
         QApplication.instance().installEventFilter(self)
         
         self.input_widget.textChanged.connect(self.show_list)
-      
-    def set_max_line(self, max_line):
-        """Set the max number of lines of the list"""
-        self.max_line = max_line
-        
-    def setSelectedValueIndex(self, value, index):
-        """Set the value-index by the selected element from the list"""
-        self.setTypedValueIndex(value, index)
-        self.input_widget.setText(value)
-        
-    def setTypedValueIndex(self, value, index=None):
-        """Set the value-index by the typed key"""
-        self.value = value
-        self.index = index
-      
+
+    # #############
+    # addItemToList
+    # #############
     def addItemToList(self, value, index):
         """Add value-index pair to the  list"""
         self.list.append((value,index))
 
+    # ############
+    # setMaxLine
+    # ############
+    def setMaxLine(self, max_line):
+        """Set the max number of lines of the list"""
+        self.max_line = max_line
+
+    # #####################
+    # setMinCharsToShowList
+    # #####################
+    def setMinCharsToShowList(self, min_chars):
+        self.min_chars_to_show_list = min_chars
+
+    def set_selected_value_index(self, value, index):
+        """Set the value-index by the selected element from the list"""
+        self.set_typed_value_index(value, index)
+        self.input_widget.setText(value)
+        
+    def set_typed_value_index(self, value, index=None):
+        """Set the value-index by the typed key"""
+        self.value = value
+        self.index = index
+      
     def hide_list(self):
         """Hide the list"""
         self.list_widget.setHidden(True)      
@@ -94,31 +111,29 @@ class AQFilter(QWidget):
         -Show only the elements which fit to the typed value
         """   
         
-        self.setTypedValueIndex(self.input_widget.text())
-       
+        self.set_typed_value_index(self.input_widget.text())
+
         self.reposition_list()
         self.list_widget.clear()
         hit_list = 0
-        for i in self.list:
+        
+        if len(self.input_widget.text()) >= self.min_chars_to_show_list:
+       
+            for i in self.list:
 
-            if self.input_widget.text().lower() in i[0].lower():
-                start = i[0].lower().index(self.input_widget.text().lower())
-                end = len(self.input_widget.text()) + start
-                part_1 = i[0][0:start]
-                part_2 = i[0][start:end]
-                part_3 = i[0][end:]
+                if self.input_widget.text().lower() in i[0].lower():
+                    start = i[0].lower().index(self.input_widget.text().lower())
+                    end = len(self.input_widget.text()) + start
+                    part_1 = i[0][0:start]
+                    part_2 = i[0][start:end]
+                    part_3 = i[0][end:]
                 
-                #item=QListWidgetItem()
-                #item.setText( )
-                #item.setData(Qt.UserRole, i[1])
-                #self.list_widget.addItem(item)
-                
-                label = DoubleLabel(part_1 + '<b>' + part_2 + '</b>' + part_3, i[0], self)
-                item=QListWidgetItem()
-                item.setData(Qt.UserRole, i[1])
-                self.list_widget.addItem(item)
-                self.list_widget.setItemWidget(item, label)
-                hit_list = hit_list + 1
+                    label = DoubleLabel(part_1 + '<b>' + part_2 + '</b>' + part_3, i[0], self)
+                    item=QListWidgetItem()
+                    item.setData(Qt.UserRole, i[1])
+                    self.list_widget.addItem(item)
+                    self.list_widget.setItemWidget(item, label)
+                    hit_list = hit_list + 1
 
         if hit_list > 0:
             self.list_widget.setHidden(False)
@@ -294,7 +309,7 @@ class ListWidget(QListWidget):
             i = self.currentItem()
 
             if i is not None:
-                self.parent.setSelectedValueIndex(self.itemWidget(i).getValueText(), i.data(Qt.UserRole))
+                self.parent.set_selected_value_index(self.itemWidget(i).getValueText(), i.data(Qt.UserRole))
                 self.setHidden(True)
 
         elif event.key() == Qt.Key_Down:
@@ -338,7 +353,7 @@ class ListWidget(QListWidget):
         if event.button() == Qt.LeftButton:
             i = self.currentItem()
             if i is not None:
-                self.parent.setSelectedValueIndex(self.itemWidget(i).getValueText(), i.data(Qt.UserRole))
+                self.parent.set_selected_value_index(self.itemWidget(i).getValueText(), i.data(Qt.UserRole))
                 self.setHidden(True)
 
         event.ignore()
@@ -429,6 +444,7 @@ class Test(QWidget):
         tmp_layout = QVBoxLayout(tmp_widget)        
         
         ako_filter = AQFilter(tmp_widget)
+        ako_filter.setMinCharsToShowList(0)
         tmp_layout.addWidget(ako_filter)
         ako_filter.addItemToList("First element - plus extra text",1)
         ako_filter.addItemToList("Second element",2)
