@@ -27,11 +27,11 @@ from PyQt5.QtGui import QFont
 
 #from PyQt5.QtWidgets import QAbstractItemView
 
-# ##################
+# ===================
 #
 # AkoFilter 
 #
-# ##################
+# ===================
 class AQFilter(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
@@ -117,9 +117,13 @@ class AQFilter(QWidget):
         if hit_list > 0:
             self.list_widget.setHidden(False)
 
-            self.list_widget.setMinimumWidth(self.list_widget.sizeHintForColumn(0) + 15)
-            self.list_widget.setMaximumWidth(self.list_widget.sizeHintForColumn(0) + 15)
+            sb_width = self.list_widget.verticalScrollBar().width() if not self.list_widget.verticalScrollBar().visibleRegion().isEmpty() else 0
 
+            self.list_widget.setFixedSize(
+                self.list_widget.sizeHintForColumn(0) + 2 * self.list_widget.frameWidth() + sb_width, 
+                self.list_widget.sizeHintForRow(0) * min(self.list_widget.count(), 8) + 2 * self.list_widget.frameWidth()
+            )
+            
             self.setWindowState(Qt.WindowActive)
             self.activateWindow()
         else:
@@ -218,11 +222,11 @@ class AQFilter(QWidget):
         return super(AQFilter, self).eventFilter(obj, event)
 
   
-# ##################
+# ==================
 #
 # Input Field Widget
 #
-# #################
+# ==================
 class FieldWidget(QLineEdit):
     def __init__(self, parent):
         super().__init__(parent)
@@ -416,8 +420,7 @@ class Test(QWidget):
         
         tmp_widget = QWidget(self)
         self_layout.addWidget(tmp_widget)
-        tmp_layout = QVBoxLayout(tmp_widget)
-        
+        tmp_layout = QVBoxLayout(tmp_widget)        
         
         ako_filter = AQFilter(tmp_widget)
         tmp_layout.addWidget(ako_filter)
@@ -438,8 +441,7 @@ class Test(QWidget):
         ako_filter.addItemToList("Fifteen element",15)        
         
         next_button = QPushButton("next button")
-        self_layout.addWidget(next_button)
-      
+        self_layout.addWidget(next_button)      
       
         # --- Window ---
         self.setWindowTitle("Test AQFilter")    
@@ -453,8 +455,6 @@ class Test(QWidget):
         cp=QDesktopWidget().availableGeometry().center()
         fg.moveCenter(cp)
         self.move(fg.topLeft())
-        
-
 
 def main():   
     
